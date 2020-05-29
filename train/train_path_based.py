@@ -16,12 +16,12 @@ args = ap.parse_args()
 
 sys.path.append('../common/')
 
-from lstm_common import *
+from .lstm_common import *
 from itertools import count
-from evaluation_common import *
+from .evaluation_common import *
 from collections import defaultdict
 from knowledge_resource import KnowledgeResource
-from paths_lstm_classifier import PathLSTMClassifier
+from .paths_lstm_classifier import PathLSTMClassifier
 
 EMBEDDINGS_DIM = 50
 
@@ -36,35 +36,35 @@ def main():
         relation_index = { relation : i for i, relation in enumerate(relations) }
 
     # Load the datasets
-    print 'Loading the dataset...'
+    print('Loading the dataset...')
     train_set = load_dataset(args.dataset_prefix + '/train.tsv', relations)
     val_set = load_dataset(args.dataset_prefix + '/val.tsv', relations)
     test_set = load_dataset(args.dataset_prefix + '/test.tsv', relations)
-    y_train = [relation_index[label] for label in train_set.values()]
-    y_val = [relation_index[label] for label in val_set.values()]
-    y_test = [relation_index[label] for label in test_set.values()]
-    dataset_keys = train_set.keys() + val_set.keys() + test_set.keys()
-    print 'Done!'
+    y_train = [relation_index[label] for label in list(train_set.values())]
+    y_val = [relation_index[label] for label in list(val_set.values())]
+    y_test = [relation_index[label] for label in list(test_set.values())]
+    dataset_keys = list(train_set.keys()) + list(val_set.keys()) + list(test_set.keys())
+    print('Done!')
 
     # Load the resource (processed corpus)
-    print 'Loading the corpus...'
+    print('Loading the corpus...')
     corpus = KnowledgeResource(args.corpus_prefix)
-    print 'Done!'
+    print('Done!')
 
     # Get the vocabulary
     vocabulary = get_vocabulary(corpus, dataset_keys)
 
     # Load the word embeddings
-    print 'Initializing word embeddings...'
+    print('Initializing word embeddings...')
     word_vectors, lemma_index = load_embeddings(args.embeddings_file, vocabulary)
-    lemma_inverted_index = { i : w for w, i in lemma_index.iteritems() }
+    lemma_inverted_index = { i : w for w, i in lemma_index.items() }
 
     # Load the paths and create the feature vectors
-    print 'Loading path files...'
+    print('Loading path files...')
     dataset_instances, pos_index, dep_index, dir_index, pos_inverted_index, dep_inverted_index, \
     dir_inverted_index = load_paths(corpus, dataset_keys, lemma_index)
-    print 'Number of words %d, number of pos tags: %d, number of dependency labels: %d, number of directions: %d' % \
-          (len(lemma_index), len(pos_index), len(dep_index), len(dir_index))
+    print('Number of words %d, number of pos tags: %d, number of dependency labels: %d, number of directions: %d' % \
+          (len(lemma_index), len(pos_index), len(dep_index), len(dir_index)))
 
     X_train = dataset_instances[:len(train_set)]
     X_val = dataset_instances[len(train_set):len(train_set)+len(val_set)]
@@ -88,13 +88,13 @@ def main():
                                             dropout=word_dropout_rate, alpha=alpha, use_xy_embeddings=False,
                                             num_hidden_layers=args.num_hidden_layers)
 
-            print 'Training with learning rate = %f, dropout = %f...' % (alpha, word_dropout_rate)
+            print('Training with learning rate = %f, dropout = %f...' % (alpha, word_dropout_rate))
             classifier.fit(X_train, y_train)
 
             pred = classifier.predict(X_val)
             precision, recall, f1, support = evaluate(y_val, pred, relations, do_full_reoprt=False)
-            print 'Learning rate = %f, dropout = %f, Precision: %.3f, Recall: %.3f, F1: %.3f' % \
-                  (alpha, word_dropout_rate, precision, recall, f1)
+            print('Learning rate = %f, dropout = %f, Precision: %.3f, Recall: %.3f, F1: %.3f' % \
+                  (alpha, word_dropout_rate, precision, recall, f1))
             f1_results.append(f1)
             models.append(classifier)
 
@@ -106,20 +106,20 @@ def main():
     best_index = np.argmax(f1_results)
     classifier = models[best_index]
     description = descriptions[best_index]
-    print 'Best hyper-parameters: ' + description
+    print('Best hyper-parameters: ' + description)
 
     # Save the best model to a file
-    print 'Saving the model...'
+    print('Saving the model...')
     classifier.save_model(args.model_prefix_file, [lemma_index, pos_index, dep_index, dir_index])
 
     # Evaluate on the test set
-    print 'Evaluation:'
+    print('Evaluation:')
     pred = classifier.predict(X_test)
     precision, recall, f1, support = evaluate(y_test, pred, relations, do_full_reoprt=True)
-    print 'Precision: %.3f, Recall: %.3f, F1: %.3f' % (precision, recall, f1)
+    print('Precision: %.3f, Recall: %.3f, F1: %.3f' % (precision, recall, f1))
 
     # Write the predictions to a file
-    output_predictions(args.model_prefix_file + '.predictions', relations, pred, test_set.keys(), y_test)
+    output_predictions(args.model_prefix_file + '.predictions', relations, pred, list(test_set.keys()), y_test)
 
     # Retrieve k-best scoring paths for each class
     all_paths = unique([path for path_list in dataset_instances for path in path_list])
@@ -130,7 +130,7 @@ def main():
             for path, score in top_k[i]:
                 path_str = '_'.join([reconstruct_edge(edge, lemma_inverted_index, pos_inverted_index,
                                                       dep_inverted_index, dir_inverted_index) for edge in path])
-                print >> f_out, '\t'.join([path_str, str(score)])
+                print('\t'.join([path_str, str(score)]), file=f_out)
 
 
 def get_vocabulary(corpus, dataset_keys):
@@ -144,7 +144,7 @@ def get_vocabulary(corpus, dataset_keys):
     
     path_lemmas = set([edge.split('/')[0]
                        for (x_id, y_id) in keys
-                       for path in get_paths(corpus, x_id, y_id).keys()
+                       for path in list(get_paths(corpus, x_id, y_id).keys())
                        for edge in path.split('_')])
     return list(path_lemmas)
 
@@ -158,9 +158,9 @@ def load_paths(corpus, dataset_keys, lemma_index):
     """
 
     # Define the dictionaries
-    pos_index = defaultdict(count(0).next)
-    dep_index = defaultdict(count(0).next)
-    dir_index = defaultdict(count(0).next)
+    pos_index = defaultdict(count(0).__next__)
+    dep_index = defaultdict(count(0).__next__)
+    dir_index = defaultdict(count(0).__next__)
 
     dummy = pos_index['#NOPATH#']
     dummy = dep_index['#NOPATH#']
@@ -168,16 +168,16 @@ def load_paths(corpus, dataset_keys, lemma_index):
 
     keys = [(get_id(corpus, x), get_id(corpus, y)) for (x, y) in dataset_keys]
     paths_x_to_y = [{ vectorize_path(path, lemma_index, pos_index, dep_index, dir_index) : count
-                      for path, count in get_paths(corpus, x_id, y_id).iteritems() }
+                      for path, count in get_paths(corpus, x_id, y_id).items() }
                     for (x_id, y_id) in keys]
-    paths = [ { p : c for p, c in paths_x_to_y[i].iteritems() if p is not None } for i in range(len(keys)) ]
+    paths = [ { p : c for p, c in paths_x_to_y[i].items() if p is not None } for i in range(len(keys)) ]
 
-    empty = [dataset_keys[i] for i, path_list in enumerate(paths) if len(path_list.keys()) == 0]
-    print 'Pairs without paths:', len(empty), ', all dataset:', len(dataset_keys)
+    empty = [dataset_keys[i] for i, path_list in enumerate(paths) if len(list(path_list.keys())) == 0]
+    print('Pairs without paths:', len(empty), ', all dataset:', len(dataset_keys))
 
-    pos_inverted_index = { i : p for p, i in pos_index.iteritems() }
-    dep_inverted_index = { i : p for p, i in dep_index.iteritems() }
-    dir_inverted_index = { i : p for p, i in dir_index.iteritems() }
+    pos_inverted_index = { i : p for p, i in pos_index.items() }
+    dep_inverted_index = { i : p for p, i in dep_index.items() }
+    dir_inverted_index = { i : p for p, i in dir_index.items() }
 
     return paths, pos_index, dep_index, dir_index, pos_inverted_index, dep_inverted_index, dir_inverted_index
 

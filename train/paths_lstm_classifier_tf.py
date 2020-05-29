@@ -6,7 +6,7 @@ import json
 
 import tensorflow as tf
 
-from lstm_common import *
+from .lstm_common import *
 from sklearn import metrics
 from sklearn.base import BaseEstimator
 
@@ -132,16 +132,16 @@ class PathLSTMClassifier(BaseEstimator):
         :param y_train the train labels
         :param x_y_vectors the train (x, y) vector indices
         """
-        print 'Training the model...'
+        print('Training the model...')
         train(self.session, self.model_parameters, X_train, y_train, self.n_epochs, self.num_relations, self.num_lemmas,
               self.num_pos, self.num_dep, self.num_directions, x_y_vectors, self.dropout)
-        print 'Done!'
+        print('Done!')
 
     def predict(self, X_test, x_y_vectors=None):
         """
         Predict the classification of the test set
         """
-        predictions, scores = zip(*self.predict_with_score(X_test, x_y_vectors))
+        predictions, scores = list(zip(*self.predict_with_score(X_test, x_y_vectors)))
         return np.array(predictions)
 
     def predict_with_score(self, X_test, x_y_vectors=None):
@@ -171,7 +171,7 @@ class PathLSTMClassifier(BaseEstimator):
         pad = lambda lst : lst if len(lst) == BATCH_SIZE else lst + [0] * (BATCH_SIZE - len(lst))
         test_pred = [0] * (len(sorted_indices))
 
-        for chunk in xrange(0, len(X_test), BATCH_SIZE):
+        for chunk in range(0, len(X_test), BATCH_SIZE):
 
             # Initialize the variables with the current batch data
             batch_indices = list(range(chunk, min(chunk + BATCH_SIZE, len(X_test))))
@@ -351,7 +351,7 @@ def train(session, model_parameters, X_train, y_train, nepochs, num_relations, n
     session.run(tf.global_variables_initializer())
 
     # Apply dropout on every component of every path
-    print 'Applying dropout...'
+    print('Applying dropout...')
     dropouts = []
     for num in [num_lemmas, num_pos, num_dep, num_dir]:
         mask = np.random.binomial(1, dropout, num)
@@ -360,9 +360,9 @@ def train(session, model_parameters, X_train, y_train, nepochs, num_relations, n
     X_train = [instance if len(instance) > 0 else { EMPTY_PATH : 1 } for instance in X_train]
     X_train = [{ tuple([tuple([component if component not in dropouts[comp_num] else UNK_INDEX
                                for comp_num, component in enumerate(edge)]) for edge in path]) : count
-                for path, count in instance.iteritems() } for instance in X_train]
+                for path, count in instance.items() } for instance in X_train]
 
-    print 'Training...'
+    print('Training...')
 
     # Sort the pairs by number of paths, and add the empty path to pairs with no paths
     num_paths = np.array([len(instance) for instance in X_train])
@@ -402,8 +402,8 @@ def train(session, model_parameters, X_train, y_train, nepochs, num_relations, n
 
         epoch_loss /= len(y_train)
         precision, recall, f1, support = metrics.precision_recall_fscore_support(y_train, y_pred, average='weighted')
-        print 'Epoch: %d/%d, Loss: %f, Precision: %.3f, Recall: %.3f, F1: %.3f' % \
-              (epoch + 1, nepochs, epoch_loss, precision, recall, f1)
+        print('Epoch: %d/%d, Loss: %f, Precision: %.3f, Recall: %.3f, F1: %.3f' % \
+              (epoch + 1, nepochs, epoch_loss, precision, recall, f1))
 
     return session
 
@@ -434,7 +434,7 @@ def prepare_batch(x_y_vectors, instances, batch_indices, num_relations, labels=N
         else lst + [0] * (max_path_per_ins - len(lst))
     curr_path_lists = np.vstack([pad([path_to_index[path] for path in instances[batch_indices[i]]])
                                  for i in range(batch_size)])
-    curr_path_counts = np.vstack([pad(instances[batch_indices[i]].values()) for i in range(batch_size)])
+    curr_path_counts = np.vstack([pad(list(instances[batch_indices[i]].values())) for i in range(batch_size)])
 
     curr_labels = np.zeros((batch_size, num_relations))
     if labels is not None:

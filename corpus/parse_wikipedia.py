@@ -42,15 +42,15 @@ def main():
                 if len(paragraph) == 0:
                     continue
 
-                parsed_par = nlp(unicode(paragraph))
+                parsed_par = nlp(str(paragraph))
 
                 # Parse each sentence separately
                 for sent in parsed_par.sents:
                     dependency_paths = parse_sentence(sent, vocabulary)
                     if len(dependency_paths) > 0:
-                        for (x, y), paths in dependency_paths.iteritems():
+                        for (x, y), paths in dependency_paths.items():
                             for path in paths:
-                                print >> f_out, '\t'.join([x, y, path])
+                                print('\t'.join([x, y, path]), file=f_out)
 
 
 def parse_sentence(sent, vocabulary):
@@ -78,13 +78,13 @@ def parse_sentence(sent, vocabulary):
 
     satellites = defaultdict(list)
     [satellites[(x, y)].extend([sat_path for path in paths[(x, y)] for sat_path in get_satellite_links(path)
-                                if sat_path is not None]) for (x, y) in paths.keys()]
+                                if sat_path is not None]) for (x, y) in list(paths.keys())]
 
     filtered_paths = defaultdict(list)
-    [filtered_paths[(x, y)].extend(filter(None, [pretty_print(set_x_l, x, set_x_r, hx, lch, hy, set_y_l, y, set_y_r)
+    [filtered_paths[(x, y)].extend([_f for _f in [pretty_print(set_x_l, x, set_x_r, hx, lch, hy, set_y_l, y, set_y_r)
                                                  for (set_x_l, x, set_x_r, hx, lch, hy, set_y_l, y, set_y_r)
-                                                 in satellites[(x, y)]]))
-     for (x, y) in satellites.keys()]
+                                                 in satellites[(x, y)]] if _f])
+     for (x, y) in list(satellites.keys())]
 
     return filtered_paths
 
@@ -140,7 +140,7 @@ def shortest_path(path):
     # 5. x and y have a different parent which is non-direct, as in "[parrot] is a member of the [bird] family".
     # The head is the last item in the common sequence of both head lists.
     else:
-        for i in xrange(min(len(hx), len(hy))):
+        for i in range(min(len(hx), len(hy))):
             # Now we've found the common ancestor in i-1
             if hx[i] is not hy[i]:
                 break

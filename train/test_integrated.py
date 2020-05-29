@@ -14,8 +14,8 @@ args = ap.parse_args()
 
 sys.path.append('../common')
 
-from evaluation_common import *
-from paths_lstm_classifier import *
+from .evaluation_common import *
+from .paths_lstm_classifier import *
 from knowledge_resource import KnowledgeResource
 
 EMBEDDINGS_DIM = 50
@@ -29,27 +29,27 @@ def main():
         relation_index = { relation : i for i, relation in enumerate(relations) }
 
     # Load the datasets
-    print 'Loading the dataset...'
+    print('Loading the dataset...')
     test_set = load_dataset(args.dataset_prefix + '/test.tsv', relations)
-    y_test = [relation_index[label] for label in test_set.values()]
+    y_test = [relation_index[label] for label in list(test_set.values())]
 
     # Load the resource (processed corpus)
-    print 'Loading the corpus...'
+    print('Loading the corpus...')
     corpus = KnowledgeResource(args.corpus_prefix)
-    print 'Done!'
+    print('Done!')
 
     # Load the pre-trained model file
     classifier, word_index, pos_index, dep_index, dir_index = load_model(args.model_prefix_file)
 
     # Load the paths and create the feature vectors
-    print 'Loading path files...'
-    x_y_vectors_test, X_test = load_paths_and_word_vectors(corpus, test_set.keys(),
+    print('Loading path files...')
+    x_y_vectors_test, X_test = load_paths_and_word_vectors(corpus, list(test_set.keys()),
                                                            word_index, pos_index, dep_index, dir_index)
 
-    print 'Evaluation:'
+    print('Evaluation:')
     pred = classifier.predict(X_test, x_y_vectors=x_y_vectors_test)
     precision, recall, f1, support = evaluate(y_test, pred, relations, do_full_reoprt=True)
-    print 'Precision: %.3f, Recall: %.3f, F1: %.3f' % (precision, recall, f1)
+    print('Precision: %.3f, Recall: %.3f, F1: %.3f' % (precision, recall, f1))
 
 
 def load_paths_and_word_vectors(corpus, dataset_keys, word_index, pos_index, dep_index, dir_index):
@@ -64,18 +64,18 @@ def load_paths_and_word_vectors(corpus, dataset_keys, word_index, pos_index, dep
     # Vectorize tha paths
     keys = [(corpus.get_id_by_term(str(x)), corpus.get_id_by_term(str(y))) for (x, y) in dataset_keys]
     paths_x_to_y = [{ vectorize_path(path, word_index, pos_index, dep_index, dir_index) : count
-                      for path, count in get_paths(corpus, x_id, y_id).iteritems() }
+                      for path, count in get_paths(corpus, x_id, y_id).items() }
                     for (x_id, y_id) in keys]
-    paths = [ { p : c for p, c in paths_x_to_y[i].iteritems() if p is not None } for i in range(len(keys)) ]
+    paths = [ { p : c for p, c in paths_x_to_y[i].items() if p is not None } for i in range(len(keys)) ]
 
-    empty = [dataset_keys[i] for i, path_list in enumerate(paths) if len(path_list.keys()) == 0]
-    print 'Pairs without paths:', len(empty), ', all dataset:', len(dataset_keys)
+    empty = [dataset_keys[i] for i, path_list in enumerate(paths) if len(list(path_list.keys())) == 0]
+    print('Pairs without paths:', len(empty), ', all dataset:', len(dataset_keys))
 
     # Get the word embeddings for x and y (get a lemma index)
-    print 'Getting word vectors for the terms...'
+    print('Getting word vectors for the terms...')
     x_y_vectors = [(word_index.get(x, 0), word_index.get(y, 0)) for (x, y) in dataset_keys]
 
-    print 'Done loading corpus data!'
+    print('Done loading corpus data!')
 
     return x_y_vectors, paths
 

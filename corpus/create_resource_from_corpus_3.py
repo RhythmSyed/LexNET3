@@ -40,7 +40,7 @@ def main():
             try:
                 x, y, path, count = line.strip().split('\t')
             except:
-                print line
+                print(line)
                 continue
 
             key = '%s###%s' % (x, y)

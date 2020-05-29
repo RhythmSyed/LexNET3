@@ -60,7 +60,7 @@ def vectorize_edge(edge, lemma_index, pos_index, dep_index, dir_index):
     return tuple([lemma, pos, dep, direction])
 
 
-def reconstruct_edge((lemma, pos, dep, direction),
+def reconstruct_edge(xxx_todo_changeme,
                      lemma_inverted_index, pos_inverted_index, dep_inverted_index, dir_inverted_index):
     """
     Return a string representation of the edge
@@ -70,6 +70,7 @@ def reconstruct_edge((lemma, pos, dep, direction),
     :param dir_inverted_index: edge direction to index dictionary
     :return: The string representation of the edge
     """
+    (lemma, pos, dep, direction) = xxx_todo_changeme
     edge = '/'.join([lemma_inverted_index[lemma], pos_inverted_index[pos], dep_inverted_index[dep],
                      dir_inverted_index[direction]])
     return edge
@@ -83,7 +84,7 @@ def load_embeddings(file_name, vocabulary):
     :return: the vocabulary and the word vectors
     """
     with codecs.open(file_name, 'r', 'utf-8') as f_in:
-        words, vectors = zip(*[line.strip().split(' ', 1) for line in f_in])
+        words, vectors = list(zip(*[line.strip().split(' ', 1) for line in f_in]))
     wv = np.loadtxt(vectors)
 
     # Add the unknown words
@@ -100,7 +101,7 @@ def load_embeddings(file_name, vocabulary):
     wv = np.vstack((wv, unknown_word_vectors))
     words = list(words) + unknown_words
 
-    print 'Known lemmas:', len(vocabulary) - len(unknown_words), '/', len(vocabulary)
+    print('Known lemmas:', len(vocabulary) - len(unknown_words), '/', len(vocabulary))
 
     # Normalize each row (word vector) in the matrix to sum-up to 1
     row_norm = np.sum(np.abs(wv) ** 2, axis=-1) ** (1. / 2)
@@ -129,7 +130,7 @@ def unique(lst):
     :param lst: a list of lists
     :return: a unique list of items appearing in those lists
     """
-    indices = sorted(range(len(lst)), key=lst.__getitem__)
+    indices = sorted(list(range(len(lst))), key=lst.__getitem__)
     indices = set(next(it) for k, it in
                   itertools.groupby(indices, key=lst.__getitem__))
     return [x for i, x in enumerate(lst) if i in indices]
@@ -145,7 +146,7 @@ def get_paths(corpus, x, y):
     """
     x_to_y_paths = corpus.get_relations(x, y)
     y_to_x_paths = corpus.get_relations(y, x)
-    paths = {corpus.get_path_by_id(path): count for (path, count) in x_to_y_paths.iteritems()}
+    paths = {corpus.get_path_by_id(path): count for (path, count) in x_to_y_paths.items()}
     paths.update({corpus.get_path_by_id(path).replace('X/', '@@@').replace('Y/', 'X/').replace('@@@', 'Y/'): count
-                  for (path, count) in y_to_x_paths.iteritems()})
+                  for (path, count) in y_to_x_paths.items()})
     return paths

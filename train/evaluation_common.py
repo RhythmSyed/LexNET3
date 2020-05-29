@@ -14,7 +14,7 @@ def output_predictions(predictions_file, relations, predictions, test_set_keys, 
     '''
     with codecs.open(predictions_file, 'w', 'utf-8') as f_out:
         for i, (x, y) in enumerate(test_set_keys):
-            print >> f_out, '\t'.join([x, y, relations[test_labels[i]], relations[predictions[i]]])
+            print('\t'.join([x, y, relations[test_labels[i]], relations[predictions[i]]]), file=f_out)
 
 
 def evaluate(y_test, y_pred, relations, do_full_reoprt=False):
@@ -39,7 +39,7 @@ def full_report(y_true, y_pred, relations):
     :return: the report
     '''
     cr = metrics.classification_report(y_true, y_pred, target_names=relations, digits=3)
-    print cr
+    print(cr)
 
 
 def eval_performance(y_true, y_pred):
@@ -50,8 +50,8 @@ def eval_performance(y_true, y_pred):
     :return: mean F1
     '''
     pre, rec, f1, support = metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    print '=== Performance ==='
-    print 'Mean precision:  %.03f%%' % pre # (100*sum(pre * support)/sum(support))
-    print 'Mean recall:     %.03f%%' % rec # (100*sum(rec * support)/sum(support))
-    print 'Mean F1:         %.03f%%' % f1 # mean_f1
+    print('=== Performance ===')
+    print('Mean precision:  %.03f%%' % pre) # (100*sum(pre * support)/sum(support))
+    print('Mean recall:     %.03f%%' % rec) # (100*sum(rec * support)/sum(support))
+    print('Mean F1:         %.03f%%' % f1) # mean_f1
     return pre, rec, f1, support

@@ -34,13 +34,13 @@ def main():
                 try:
                     x, y, path = line.strip().split('\t')
                 except:
-                    print line
+                    print(line)
                     continue
 
                 # Frequent path
                 x_id, y_id, path_id = term_to_id_db[x], term_to_id_db[y], path_to_id_db.get(path, -1)
                 if path_id != -1:
-                    print >> f_out, '\t'.join(map(str, (x_id, y_id, path_id)))
+                    print('\t'.join(map(str, (x_id, y_id, path_id))), file=f_out)
 
 
 if __name__ == '__main__':
