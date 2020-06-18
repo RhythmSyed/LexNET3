@@ -1,4 +1,6 @@
-import bsddb
+import bsddb3
+
+from pathlib import Path
 
 
 class KnowledgeResource:
@@ -10,17 +12,21 @@ class KnowledgeResource:
         Init the knowledge resource
         :param resource_prefix - the resource directory and file prefix
         """
-        self.term_to_id = bsddb.btopen(resource_prefix + '_term_to_id.db', 'r')
-        self.id_to_term = bsddb.btopen(resource_prefix + '_id_to_term.db', 'r')
-        self.path_to_id = bsddb.btopen(resource_prefix + '_path_to_id.db', 'r')
-        self.id_to_path = bsddb.btopen(resource_prefix + '_id_to_path.db', 'r')
-        self.l2r_edges = bsddb.btopen(resource_prefix + '_l2r.db', 'r')
+        if type(resource_prefix) is not Path:
+            resource_prefix = Path(resource_prefix)
 
-    def get_term_by_id(self, id):
-        return self.id_to_term[str(id)]
+        # TODO check to make sure files exist
+        self.term_to_id = bsddb3.btopen(str(resource_prefix / '_term_to_id.db'), 'r')
+        self.id_to_term = bsddb3.btopen(str(resource_prefix / '_id_to_term.db'), 'r')
+        self.path_to_id = bsddb3.btopen(str(resource_prefix / '_path_to_id.db'), 'r')
+        self.id_to_path = bsddb3.btopen(str(resource_prefix / '_id_to_path.db'), 'r')
+        self.l2r_edges = bsddb3.btopen(str(resource_prefix / '_l2r.db'), 'r')
 
-    def get_path_by_id(self, id):
-        return self.id_to_path[str(id)]
+    def get_term_by_id(self, id_):
+        return self.id_to_term[str(id_)]
+
+    def get_path_by_id(self, id_):
+        return self.id_to_path[str(id_)]
 
     def get_id_by_term(self, term):
         return int(self.term_to_id[term]) if term in self.term_to_id else -1
@@ -38,6 +44,6 @@ class KnowledgeResource:
 
         if len(path_str) > 0:
             paths = [tuple(map(int, p.split(':'))) for p in path_str.split(',')]
-            path_dict = { path : count for (path, count) in paths }
+            path_dict = {path: count for (path, count) in paths}
 
         return path_dict

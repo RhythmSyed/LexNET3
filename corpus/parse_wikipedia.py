@@ -1,7 +1,7 @@
 import codecs
 
 from docopt import docopt
-from spacy.en import English
+from spacy.lang.en import English
 from collections import defaultdict
 
 
@@ -17,8 +17,8 @@ def main():
         parse_wikipedia.py <wiki_file> <vocabulary_file> <out_file>
 
         <wiki_file> = the Wikipedia dump file
-        <vocabulary_file> = a file containing the words to include
-        <out_file> = the output file
+        <vocabulary_file> = a file containing the words to include (must include bi-grams and tri-grams)
+        <out_file> = the output file (the triplet file that is used in downstream neural networks)
     """)
 
     nlp = English()

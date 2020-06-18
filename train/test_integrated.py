@@ -2,9 +2,9 @@ import sys
 import argparse
 
 ap = argparse.ArgumentParser()
-ap.add_argument('-g', '--gpus', help='number of gpus to use [0,1], default=0', type=int, default=0, choices=[0,1])
-ap.add_argument('-m', '--memory', help='set dynet memory, default 8192',  default=8192)
-ap.add_argument('-s', '--seed', help='dynet random seed, pick any integer you like, default=3016748844', default=3016748844)
+#ap.add_argument('-g', '--gpus', help='number of gpus to use [0,1], default=0', type=int, default=0, choices=[0,1])
+#ap.add_argument('-m', '--memory', help='set dynet memory, default 8192',  default=8192)
+#ap.add_argument('-s', '--seed', help='dynet random seed, pick any integer you like, default=3016748844', default=3016748844)
 ap.add_argument('corpus_prefix', help='path to the corpus resource')
 ap.add_argument('dataset_prefix', help='path to the train/test/val/rel data')
 ap.add_argument('model_prefix_file', help='where to store the result')
@@ -13,10 +13,11 @@ args = ap.parse_args()
 
 
 sys.path.append('../common')
+sys.path.append('.common')
 
 from .evaluation_common import *
 from .paths_lstm_classifier import *
-from knowledge_resource import KnowledgeResource
+from ..common.knowledge_resource import KnowledgeResource
 
 EMBEDDINGS_DIM = 50
 

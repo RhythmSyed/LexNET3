@@ -1,5 +1,5 @@
 import codecs
-import bsddb
+import bsddb3
 
 from docopt import docopt
 
@@ -36,9 +36,9 @@ def main():
         frequent_paths = set([line.strip() for line in f_in])
 
     # Save the paths
-    path_to_id = { path : i for i, path in enumerate(list(frequent_paths)) }
-    path_to_id_db = bsddb.btopen(resource_prefix + '_path_to_id.db', 'c')
-    id_to_path_db = bsddb.btopen(resource_prefix + '_id_to_path.db', 'c')
+    path_to_id = {path: i for i, path in enumerate(list(frequent_paths))}
+    path_to_id_db = bsddb3.btopen(resource_prefix + '_path_to_id.db', 'c')
+    id_to_path_db = bsddb3.btopen(resource_prefix + '_id_to_path.db', 'c')
 
     for path, id in path_to_id.items():
         id, path = str(id), str(path)
@@ -48,7 +48,7 @@ def main():
     path_to_id_db.sync()
     id_to_path_db.sync()
 
-    frequent_paths = None
+    # frequent_paths  = None  # TODO delete?
 
     # Load the terms
     print('Saving the terms...')
@@ -56,14 +56,14 @@ def main():
         terms = [line.strip() for line in f_in]
 
     # Save the terms
-    term_to_id = { term : i for i, term in enumerate(terms) }
-    term_to_id_db = bsddb.btopen(resource_prefix + '_term_to_id.db', 'c')
-    id_to_term_db = bsddb.btopen(resource_prefix + '_id_to_term.db', 'c')
+    term_to_id = {term: i for i, term in enumerate(terms)}
+    term_to_id_db = bsddb3.btopen(resource_prefix + '_term_to_id.db', 'c')
+    id_to_term_db = bsddb3.btopen(resource_prefix + '_id_to_term.db', 'c')
 
-    for term, id in term_to_id.items():
-        id, term = str(id), str(term)
-        term_to_id_db[term] = id
-        id_to_term_db[id] = term
+    for term, id_ in term_to_id.items():
+        id_, term = str(id_), str(term)
+        term_to_id_db[term] = id_
+        id_to_term_db[id_] = term
 
     term_to_id_db.sync()
     id_to_term_db.sync()

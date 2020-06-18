@@ -3,7 +3,7 @@ import glob
 import shutil
 
 import tensorflow as tf
-tf.set_random_seed(0)
+tf.compat.v1.set_random_seed(0)
 
 sys.path.append('../common/')
 
@@ -12,14 +12,15 @@ from docopt import docopt
 from itertools import count
 from .evaluation_common import *
 from collections import defaultdict
-from knowledge_resource import KnowledgeResource
+from ..common.knowledge_resource import KnowledgeResource  # TODO does this work, or do we have to append to Path
 from .paths_lstm_classifier_tf import PathLSTMClassifier
 
 EMBEDDINGS_DIM = 50
 
 
 def main():
-
+    # TODO this docopt need to explain that the usage is a prerequisite to running this script, which trains the
+    # TODO hyperparameters of the model, and then evaluates the best model.
     args = docopt("""The LSTM-based integrated pattern-based and distributional method for multiclass
     semantic relations classification
 
@@ -172,12 +173,13 @@ def load_paths_and_word_vectors(corpus, dataset_keys, lemma_index):
     dummy = dep_index['#UNKNOWN#']
     dummy = dir_index['#UNKNOWN#']
 
-    # Vectorize tha paths
+    # Vectorize tha paths (this calculates p_xy for the corpus
+    # Note: vectorize path calls vectorize edge, which computes the edge
     keys = [(corpus.get_id_by_term(str(x)), corpus.get_id_by_term(str(y))) for (x, y) in dataset_keys]
-    paths_x_to_y = [{ vectorize_path(path, lemma_index, pos_index, dep_index, dir_index) : count
-                      for path, count in get_paths(corpus, x_id, y_id).items() }
+    paths_x_to_y = [{vectorize_path(path, lemma_index, pos_index, dep_index, dir_index): count
+                      for path, count in get_paths(corpus, x_id, y_id).items()}
                     for (x_id, y_id) in keys]
-    paths = [ { p : c for p, c in paths_x_to_y[i].items() if p is not None } for i in range(len(keys)) ]
+    paths = [{p: c for p, c in paths_x_to_y[i].items() if p is not None} for i in range(len(keys))]
 
     empty = [dataset_keys[i] for i, path_list in enumerate(paths) if len(list(path_list.keys())) == 0]
     print('Pairs without paths:', len(empty), ', all dataset:', len(dataset_keys))

@@ -1,4 +1,4 @@
-import bsddb
+import bsddb3
 import codecs
 
 from docopt import docopt
@@ -25,15 +25,15 @@ def main():
     resource_prefix = args['<resource_prefix>']
 
     # Load the resource DBs
-    term_to_id_db = bsddb.btopen(resource_prefix + '_term_to_id.db')
-    path_to_id_db = bsddb.btopen(resource_prefix + '_path_to_id.db')
+    term_to_id_db = bsddb3.btopen(resource_prefix + '_term_to_id.db')
+    path_to_id_db = bsddb3.btopen(resource_prefix + '_path_to_id.db')
 
     with codecs.open(triplet_file) as f_in:
         with codecs.open(triplet_file + '_id', 'w') as f_out:
             for line in f_in:
                 try:
                     x, y, path = line.strip().split('\t')
-                except:
+                except:  # TODO improve
                     print(line)
                     continue
 

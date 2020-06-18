@@ -1,5 +1,4 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 import math
 import json
@@ -10,8 +9,11 @@ from .lstm_common import *
 from sklearn import metrics
 from sklearn.base import BaseEstimator
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+tf.compat.v1.disable_eager_execution()
+tf.compat.v1.reset_default_graph()
+
 NUM_LAYERS = 2
-LSTM_HIDDEN_DIM = 60
 LEMMA_DIM = 50
 POS_DIM = 4
 DEP_DIM = 5
@@ -22,6 +24,7 @@ MAX_PATH_LEN = 6
 BATCH_SIZE = 10
 UNK_INDEX = 0
 
+LSTM_HIDDEN_DIM = 60
 LSTM_OUTPUT_DIM = LSTM_HIDDEN_DIM
 LSTM_INPUT_DIM = LEMMA_DIM + POS_DIM + DEP_DIM + DIR_DIM
 
@@ -59,7 +62,7 @@ class PathLSTMClassifier(BaseEstimator):
         self.model_parameters = create_computation_graph(self.num_lemmas, self.num_pos, self.num_dep, self.num_directions,
                                                          self.num_relations, self.lemma_vectors, self.num_hidden_layers)
 
-        self.session = tf.Session()
+        self.session = tf.compat.v1.Session()
 
     @classmethod
     def load_model(cls, model_file_prefix):
@@ -77,10 +80,10 @@ class PathLSTMClassifier(BaseEstimator):
                                         num_hidden_layers=params['num_hidden_layers'])
 
         # Initialize the session and start training
-        classifier.session.run(tf.global_variables_initializer())
+        classifier.session.run(tf.compat.v1.global_variables_initializer())
 
         # Load the model
-        tf.train.Saver().restore(classifier.session, model_file_prefix)
+        tf.compat.v1.train.Saver().restore(classifier.session, model_file_prefix)
 
         # Get the variables
         variable_names = ['W1', 'b1', 'lemma_lookup', 'pos_lookup', 'dep_lookup', 'dir_lookup']
@@ -88,7 +91,7 @@ class PathLSTMClassifier(BaseEstimator):
         if classifier.num_hidden_layers == 1:
             variable_names += ['W2', 'b2']
 
-        classifier.model_parameters.update({ v.name : v for v in tf.global_variables() })
+        classifier.model_parameters.update({ v.name : v for v in tf.compat.v1.global_variables() })
 
         # Load the dictionaries from the json file
         with open(model_file_prefix + '.dict') as f_in:
@@ -104,7 +107,7 @@ class PathLSTMClassifier(BaseEstimator):
         :param output_prefix Where to save the model
         :param dictionaries hyper-parameters to save
         """
-        tf.train.Saver().save(self.session, output_prefix)
+        tf.compat.v1.train.Saver().save(self.session, output_prefix)
 
         # Save the model hyper-parameters
         params = { 'num_relations' : self.num_relations, 'num_hidden_layers' : self.num_hidden_layers,
@@ -123,7 +126,7 @@ class PathLSTMClassifier(BaseEstimator):
         Close the session
         """
         self.session.close()
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
 
     def fit(self, X_train, y_train, x_y_vectors=None):
         """
@@ -218,32 +221,32 @@ def mlp_model(model_parameters, path_embeddings, num_relations, num_hidden_layer
         b2 = model_parameters['b2']
 
     # Define the place holders
-    path_lists = tf.placeholder(tf.int32, (BATCH_SIZE, None)) # list of paths for each item in the batch
-    path_counts = tf.placeholder(tf.int32, (BATCH_SIZE, None)) # list of path counts for each item in the batch
-    x_vector_inputs = tf.placeholder(tf.int32, shape=[BATCH_SIZE])
-    y_vector_inputs = tf.placeholder(tf.int32, shape=[BATCH_SIZE])
-    labels = tf.placeholder(tf.int32, shape=[BATCH_SIZE, num_relations])
+    path_lists = tf.compat.v1.placeholder(tf.int32, shape=(BATCH_SIZE, None)) # list of paths for each item in the batch
+    path_counts = tf.compat.v1.placeholder(tf.int32, shape=(BATCH_SIZE, None)) # list of path counts for each item in the batch
+    x_vector_inputs = tf.compat.v1.placeholder(tf.int32, shape=[BATCH_SIZE])
+    y_vector_inputs = tf.compat.v1.placeholder(tf.int32, shape=[BATCH_SIZE])
+    labels = tf.compat.v1.placeholder(tf.int32, shape=[BATCH_SIZE, num_relations])
 
     # Define the operations
-    num_paths = tf.reduce_sum(tf.cast(path_counts, tf.float32), 1) # number of paths for each pair [BATCH_SIZE, 1]
+    num_paths = tf.reduce_sum(input_tensor=tf.cast(path_counts, tf.float32), axis=1) # number of paths for each pair [BATCH_SIZE, 1]
     curr_path_embeddings = [tf.squeeze(tf.gather(path_embeddings, path_list))
                             for path_list in tf.split(path_lists, BATCH_SIZE, axis=0)] # a list of [MAX_PATHS, 60]
 
     path_counts_lst = tf.split(path_counts, BATCH_SIZE, axis=0) # a list of [MAX_PATHS, 1]
-    path_counts_tiled = [tf.transpose(tf.tile(tf.cast(path_count, tf.float32), tf.stack([LSTM_HIDDEN_DIM, 1])))
+    path_counts_tiled = [tf.transpose(a=tf.tile(tf.cast(path_count, tf.float32), tf.stack([LSTM_HIDDEN_DIM, 1])))
                          for path_count in path_counts_lst] # a list of [MAX_PATHS, 60]
 
     weighted = [tf.multiply(curr_path_embedding, path_count) for (curr_path_embedding, path_count)
                 in zip(curr_path_embeddings, path_counts_tiled)]
 
-    weighted_sum = [tf.reduce_sum(weighted[i], 0) for i in range(BATCH_SIZE)]
+    weighted_sum = [tf.reduce_sum(input_tensor=weighted[i], axis=0) for i in range(BATCH_SIZE)]
 
-    pair_path_embeddings = tf.stack([tf.div(weighted_sum_item, num_paths_item)
+    pair_path_embeddings = tf.stack([tf.compat.v1.div(weighted_sum_item, num_paths_item)
                                      for weighted_sum_item, num_paths_item in zip(weighted_sum, tf.unstack(num_paths))])
 
     # Concatenate the path embedding to the word embeddings and feed it to the MLP
-    x_vectors = tf.nn.embedding_lookup(lemma_lookup, x_vector_inputs)
-    y_vectors = tf.nn.embedding_lookup(lemma_lookup, y_vector_inputs)
+    x_vectors = tf.nn.embedding_lookup(params=lemma_lookup, ids=x_vector_inputs)
+    y_vectors = tf.nn.embedding_lookup(params=lemma_lookup, ids=y_vector_inputs)
     network_input = tf.concat([x_vectors, pair_path_embeddings, y_vectors], 1)
     h = tf.add(tf.matmul(network_input, W1), b1)
     output = h
@@ -268,27 +271,29 @@ def lstm_model(model_parameters):
     dir_lookup = model_parameters['dir_lookup']
 
     # Define the place holders
-    batch_paths = tf.placeholder(tf.int32, shape=[None, MAX_PATH_LEN, 4]) # the paths to compute in this batch
-    seq_lengths = tf.placeholder(tf.int32, shape=[None]) # the length of each path
-    num_batch_paths = tf.placeholder(tf.int32)
+    batch_paths = tf.compat.v1.placeholder(tf.int32, shape=(None, MAX_PATH_LEN, 4)) # the paths to compute in this batch
+    seq_lengths = tf.compat.v1.placeholder(tf.int32, shape=(None,)) # the length of each path
+    num_batch_paths = tf.compat.v1.placeholder(tf.int32)
 
     lookup_tables = [lemma_lookup, pos_lookup, dep_lookup, dir_lookup]
 
     edges = tf.split(batch_paths, MAX_PATH_LEN, axis=1)
     edge_components = [tf.split(edge, 4, axis=2) for edge in edges]
 
-    path_matrix = [tf.concat([tf.nn.embedding_lookup(lookup_table, component)
+    path_matrix = [tf.concat([tf.nn.embedding_lookup(params=lookup_table, ids=component)
                     for lookup_table, component in zip(lookup_tables, edge)], -1)
                    for edge in edge_components]
 
     path_matrix = [tf.concat(lst, -1) for lst in path_matrix]
     path_matrix = tf.squeeze(tf.stack(path_matrix, 0))
+    print("num_batch_paths", tf.shape(num_batch_paths))
+    print("MAX_PATH_LEN", tf.shape(MAX_PATH_LEN))
+    print("LSTM_INPUT_DIM", tf.shape(LSTM_INPUT_DIM))
     path_matrix = tf.reshape(path_matrix, tf.stack([num_batch_paths, MAX_PATH_LEN, LSTM_INPUT_DIM]))
 
     # Define the operations
-    lstm_cell = tf.contrib.rnn.BasicLSTMCell(LSTM_HIDDEN_DIM)
-    initial_state = lstm_cell.zero_state(num_batch_paths, tf.float32)
-    lstm_outputs, _ = tf.nn.dynamic_rnn(lstm_cell, path_matrix, initial_state=initial_state, sequence_length=seq_lengths)
+    lstm_cell = tf.compat.v1.nn.rnn_cell.BasicLSTMCell(LSTM_HIDDEN_DIM)
+    lstm_outputs, _ = tf.compat.v1.nn.dynamic_rnn(lstm_cell, path_matrix, dtype=tf.float32, sequence_length=seq_lengths)
 
     # Get the last output from each item in the batch
     path_embeddings = extract_last_relevant(lstm_outputs, num_batch_paths, seq_lengths)
@@ -344,11 +349,11 @@ def train(session, model_parameters, X_train, y_train, nepochs, num_relations, n
     labels = model_parameters['labels']
 
     # Define the loss function and the optimization algorithm
-    loss_fn = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=predictions, labels=labels))
-    optimizer = tf.train.AdamOptimizer().minimize(loss_fn)
+    loss_fn = tf.reduce_mean(input_tensor=tf.nn.softmax_cross_entropy_with_logits(logits=predictions, labels=tf.stop_gradient(labels)))
+    optimizer = tf.compat.v1.train.AdamOptimizer().minimize(loss_fn)
 
     # Initialize the session and start training
-    session.run(tf.global_variables_initializer())
+    session.run(tf.compat.v1.global_variables_initializer())
 
     # Apply dropout on every component of every path
     print('Applying dropout...')
@@ -474,7 +479,7 @@ def create_computation_graph(num_lemmas, num_pos, num_dep, num_directions, num_r
     :return: the model parameters: LSTM, parameters and lookup tables
     """
     model_parameters = {}
-    initializer = tf.contrib.layers.xavier_initializer()
+    initializer = tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform")
 
     # Define the MLP
     network_input = LSTM_OUTPUT_DIM + 2 * LEMMA_DIM
@@ -484,16 +489,16 @@ def create_computation_graph(num_lemmas, num_pos, num_dep, num_directions, num_r
 
     if num_hidden_layers == 0:
 
-        model_parameters['W1'] = tf.get_variable('W1', shape=[network_input, num_relations], initializer=initializer)
-        model_parameters['b1'] = tf.get_variable('b1', shape=[num_relations], initializer=initializer)
+        model_parameters['W1'] = tf.compat.v1.get_variable('W1', shape=[network_input, num_relations], initializer=initializer)
+        model_parameters['b1'] = tf.compat.v1.get_variable('b1', shape=[num_relations], initializer=initializer)
 
     elif num_hidden_layers == 1:
 
-        model_parameters['W1'] = tf.get_variable('W1', shape=[network_input, hidden_dim], initializer=initializer)
-        model_parameters['b1'] = tf.get_variable('b1', shape=[hidden_dim], initializer=initializer)
+        model_parameters['W1'] = tf.compat.v1.get_variable('W1', shape=[network_input, hidden_dim], initializer=initializer)
+        model_parameters['b1'] = tf.compat.v1.get_variable('b1', shape=[hidden_dim], initializer=initializer)
 
-        model_parameters['W2'] = tf.get_variable('W2', shape=[hidden_dim, num_relations], initializer=initializer)
-        model_parameters['b2'] = tf.get_variable('b2', shape=[num_relations], initializer=initializer)
+        model_parameters['W2'] = tf.compat.v1.get_variable('W2', shape=[hidden_dim, num_relations], initializer=initializer)
+        model_parameters['b2'] = tf.compat.v1.get_variable('b2', shape=[num_relations], initializer=initializer)
 
     else:
         raise ValueError('Only 0 or 1 hidden layers are supported')
@@ -502,12 +507,12 @@ def create_computation_graph(num_lemmas, num_pos, num_dep, num_directions, num_r
     if wv != None:
         model_parameters['lemma_lookup'] = tf.Variable(wv, name='lemma_lookup', dtype=tf.float32)
     else:
-        model_parameters['lemma_lookup'] = tf.get_variable('lemma_lookup', shape=[num_lemmas, LEMMA_DIM],
+        model_parameters['lemma_lookup'] = tf.compat.v1.get_variable('lemma_lookup', shape=[num_lemmas, LEMMA_DIM],
                                                            initializer=initializer)
 
-    model_parameters['pos_lookup'] = tf.get_variable('pos_lookup', shape=[num_pos, POS_DIM], initializer=initializer)
-    model_parameters['dep_lookup'] = tf.get_variable('dep_lookup', shape=[num_dep, DEP_DIM], initializer=initializer)
-    model_parameters['dir_lookup'] = tf.get_variable('dir_lookup', shape=[num_directions, DIR_DIM], initializer=initializer)
+    model_parameters['pos_lookup'] = tf.compat.v1.get_variable('pos_lookup', shape=[num_pos, POS_DIM], initializer=initializer)
+    model_parameters['dep_lookup'] = tf.compat.v1.get_variable('dep_lookup', shape=[num_dep, DEP_DIM], initializer=initializer)
+    model_parameters['dir_lookup'] = tf.compat.v1.get_variable('dir_lookup', shape=[num_directions, DIR_DIM], initializer=initializer)
 
     # Define the neural network model
     batch_paths, seq_lengths, path_embeddings, num_batch_paths = lstm_model(model_parameters)

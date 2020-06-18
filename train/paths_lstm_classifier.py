@@ -1,22 +1,21 @@
 import math
 import json
-from __main__ import args
 from functools import reduce
 
 # Support GPU, following change https://github.com/vered1986/LexNET/pull/2 from @gossebouma
 # Use CPU
-if args.gpus == 0:
-    import _dynet as dy
-    dyparams = dy.DynetParams()
+#if args.gpus == 0:
+import _dynet as dy
+dyparams = dy.DynetParams()
 
-# Use GPU
-else:
-    import _gdynet as dy
-    dyparams = dy.DynetParams()
-    dyparams.set_requested_gpus(args.gpus)
+# # Use GPU
+# else:
+#     import _gdynet as dy
+#     dyparams = dy.DynetParams()
+#     dyparams.set_requested_gpus(args.gpus)
 
-dyparams.set_mem(args.memory)
-dyparams.set_random_seed(args.seed)
+#dyparams.set_mem(args.memory)
+#dyparams.set_random_seed(args.seed)
 dyparams.init()
 	
 from .lstm_common import *

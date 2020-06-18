@@ -1,4 +1,4 @@
-import bsddb
+import bsddb3
 import codecs
 
 from docopt import docopt
@@ -33,7 +33,7 @@ def main():
     id_triplet_file = args['<id_triplet_file>']
     resource_prefix = args['<resource_prefix>']
 
-    l2r_db = bsddb.btopen(resource_prefix + '_l2r.db', 'c')
+    l2r_db = bsddb3.btopen(resource_prefix + '_l2r.db', 'c')
 
     with codecs.open(id_triplet_file) as f_in:
         for line in f_in:
