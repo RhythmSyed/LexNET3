@@ -34,7 +34,7 @@ class PathLSTMClassifier(BaseEstimator):
     def __init__(self, num_lemmas, num_pos, num_dep, num_directions=5, n_epochs=10, num_relations=2,
                  lemma_embeddings=None, dropout=0.0, num_hidden_layers=0):
         """'
-        Initialize the LSTM 
+        Initialize the LSTM
         :param num_lemmas Number of distinct lemmas in the paths + words in the (x, y) pairs
         :param num_pos Number of distinct part of speech tags
         :param num_dep Number of distinct depenedency labels
