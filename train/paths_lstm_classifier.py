@@ -443,7 +443,11 @@ def load_model(model_file_prefix):
                                     num_hidden_layers=params['num_hidden_layers'])
 
     # Load the model
+    # this appears to hang for models trained on old versions of dynet
+    print("Loading the model from the .model file. "
+          "This may hang if using an old pretrained model.")
     classifier.model.populate(model_file_prefix + '.model')
+    print("Done!")
 
     # Load the dictionaries from the json file
     with open(model_file_prefix + '.dict') as f_in:

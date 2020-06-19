@@ -1,7 +1,5 @@
 import bsddb3
 
-from pathlib import Path
-
 
 class KnowledgeResource:
     """
@@ -12,15 +10,13 @@ class KnowledgeResource:
         Init the knowledge resource
         :param resource_prefix - the resource directory and file prefix
         """
-        if type(resource_prefix) is not Path:
-            resource_prefix = Path(resource_prefix)
 
         # TODO check to make sure files exist
-        self.term_to_id = bsddb3.btopen(str(resource_prefix / '_term_to_id.db'), 'r')
-        self.id_to_term = bsddb3.btopen(str(resource_prefix / '_id_to_term.db'), 'r')
-        self.path_to_id = bsddb3.btopen(str(resource_prefix / '_path_to_id.db'), 'r')
-        self.id_to_path = bsddb3.btopen(str(resource_prefix / '_id_to_path.db'), 'r')
-        self.l2r_edges = bsddb3.btopen(str(resource_prefix / '_l2r.db'), 'r')
+        self.term_to_id = bsddb3.btopen(str(resource_prefix + '_term_to_id.db'), 'r')
+        self.id_to_term = bsddb3.btopen(str(resource_prefix + '_id_to_term.db'), 'r')
+        self.path_to_id = bsddb3.btopen(str(resource_prefix + '_path_to_id.db'), 'r')
+        self.id_to_path = bsddb3.btopen(str(resource_prefix + '_id_to_path.db'), 'r')
+        self.l2r_edges = bsddb3.btopen(str(resource_prefix + '_l2r.db'), 'r')
 
     def get_term_by_id(self, id_):
         return self.id_to_term[str(id_)]
