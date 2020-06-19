@@ -1,3 +1,4 @@
+import codecs
 import sys
 import argparse
 
@@ -16,10 +17,24 @@ args = ap.parse_args()
 
 sys.path.append('../common/')
 
-from .lstm_common import *
+import numpy as np
+
+from .lstm_common import (
+    get_id,
+    get_paths,
+    unique,
+    reconstruct_edge,
+    vectorize_path,
+    load_embeddings,
+    load_dataset,
+)
 from itertools import count
-from .evaluation_common import *
+from .evaluation_common import (
+    evaluate,
+    output_predictions,
+)
 from collections import defaultdict
+# TODO remove path appending and replace with library import
 from knowledge_resource import KnowledgeResource
 from .paths_lstm_classifier import PathLSTMClassifier
 

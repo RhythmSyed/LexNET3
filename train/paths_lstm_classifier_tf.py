@@ -3,9 +3,9 @@ import os
 import math
 import json
 
+import numpy as np
 import tensorflow as tf
 
-from .lstm_common import *
 from sklearn import metrics
 from sklearn.base import BaseEstimator
 

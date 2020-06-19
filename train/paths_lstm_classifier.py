@@ -17,8 +17,8 @@ dyparams = dy.DynetParams()
 #dyparams.set_mem(args.memory)
 #dyparams.set_random_seed(args.seed)
 dyparams.init()
-	
-from .lstm_common import *
+
+import numpy as np
 from sklearn.base import BaseEstimator
 
 NUM_LAYERS = 2

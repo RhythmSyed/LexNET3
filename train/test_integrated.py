@@ -1,3 +1,4 @@
+import codecs
 import sys
 import argparse
 
@@ -15,8 +16,9 @@ args = ap.parse_args()
 sys.path.append('../common')
 sys.path.append('.common')
 
-from .evaluation_common import *
-from .paths_lstm_classifier import *
+from .evaluation_common import evaluate
+from .lstm_common import load_dataset, get_paths, vectorize_path
+from .paths_lstm_classifier import load_model
 from ..common.knowledge_resource import KnowledgeResource
 
 EMBEDDINGS_DIM = 50

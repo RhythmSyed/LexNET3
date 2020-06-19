@@ -1,3 +1,4 @@
+import codecs
 import sys
 import argparse
 
@@ -13,8 +14,9 @@ args = ap.parse_args()
 
 sys.path.append('../common/')
 
-from .evaluation_common import *
-from .paths_lstm_classifier import *
+from .evaluation_common import evaluate
+from .paths_lstm_classifier import load_model
+# TODO replace appended path with library import
 from knowledge_resource import KnowledgeResource
 
 EMBEDDINGS_DIM = 50

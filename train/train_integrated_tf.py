@@ -7,10 +7,18 @@ tf.compat.v1.set_random_seed(0)
 
 sys.path.append('../common/')
 
-from .lstm_common import *
+from .lstm_common import (
+    vectorize_path,
+    load_dataset,
+    load_embeddings,
+    get_paths,
+)
 from docopt import docopt
 from itertools import count
-from .evaluation_common import *
+from .evaluation_common import (
+    output_predictions,
+    evaluate,
+)
 from collections import defaultdict
 from ..common.knowledge_resource import KnowledgeResource  # TODO does this work, or do we have to append to Path
 from .paths_lstm_classifier_tf import PathLSTMClassifier
