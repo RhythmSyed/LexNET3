@@ -1,3 +1,5 @@
+# LexNET3 -> LexNET ported to Python >3
+
 # LexNET: Integrated Path-based and Distributional Method for Lexical Semantic Relation Classification
 
 **LexNET** is an open source framework for classifying semantic relations between term-pairs. It uses distributional information on each term, and path-based information, encoded using an LSTM.
