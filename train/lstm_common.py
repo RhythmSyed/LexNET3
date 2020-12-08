@@ -1,4 +1,3 @@
-import codecs
 import itertools
 
 import numpy as np
@@ -118,7 +117,7 @@ def load_dataset(dataset_file, relations):
     :param dataset_file: the file path
     :return: a list of dataset instances, (x, y, relation)
     """
-    with codecs.open(dataset_file, 'r', 'utf-8') as f_in:
+    with open(dataset_file, 'r', encoding='utf-8') as f_in:
         dataset = [tuple(line.strip().split('\t')) for line in f_in]
         dataset = {(x.lower(), y.lower()): relation for (x, y, relation) in dataset if relation in relations}
 
