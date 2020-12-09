@@ -82,7 +82,7 @@ def load_embeddings(file_name, vocabulary):
     :param vocabulary: limited vocabulary to load vectors for
     :return: the vocabulary and the word vectors
     """
-    with codecs.open(file_name, 'r', 'utf-8') as f_in:
+    with open(file_name, 'r', encoding='utf-8') as f_in:
         words, vectors = list(zip(*[line.strip().split(' ', 1) for line in f_in]))
     wv = np.loadtxt(vectors)
 
@@ -145,7 +145,7 @@ def get_paths(corpus, x, y):
     """
     x_to_y_paths = corpus.get_relations(x, y)
     y_to_x_paths = corpus.get_relations(y, x)
-    paths = {corpus.get_path_by_id(path): count for (path, count) in x_to_y_paths.items()}
-    paths.update({corpus.get_path_by_id(path).replace('X/', '@@@').replace('Y/', 'X/').replace('@@@', 'Y/'): count
-                  for (path, count) in y_to_x_paths.items()})
+    paths = {corpus.get_path_by_id(path).decode('utf-8'): count for path, count in x_to_y_paths.items()}
+    paths.update({corpus.get_path_by_id(path).decode('utf-8').replace('X/', '@@@').replace('Y/', 'X/')
+                 .replace('@@@', 'Y/'): count for path, count in y_to_x_paths.items()})
     return paths

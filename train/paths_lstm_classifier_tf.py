@@ -504,7 +504,7 @@ def create_computation_graph(num_lemmas, num_pos, num_dep, num_directions, num_r
         raise ValueError('Only 0 or 1 hidden layers are supported')
 
     # Create the embeddings lookup
-    if wv != None:
+    if len(wv) != 0:
         model_parameters['lemma_lookup'] = tf.Variable(wv, name='lemma_lookup', dtype=tf.float32)
     else:
         model_parameters['lemma_lookup'] = tf.compat.v1.get_variable('lemma_lookup', shape=[num_lemmas, LEMMA_DIM],

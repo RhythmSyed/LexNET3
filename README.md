@@ -3,6 +3,8 @@ Setup:
 * conda env create -f environment.yml
 * conda activate LexNET3_env
 
+On macOS:
+* brew install berkeley-db@4
 
 # LexNET: Integrated Path-based and Distributional Method for Lexical Semantic Relation Classification
 

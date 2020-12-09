@@ -8,7 +8,7 @@ tf.compat.v1.set_random_seed(0)
 
 sys.path.append('../common/')
 
-from .lstm_common import (
+from lstm_common import (
     vectorize_path,
     load_dataset,
     load_embeddings,
@@ -16,29 +16,29 @@ from .lstm_common import (
 )
 from docopt import docopt
 from itertools import count
-from .evaluation_common import (
+from evaluation_common import (
     output_predictions,
     evaluate,
 )
 from collections import defaultdict
-from ..common.knowledge_resource import KnowledgeResource  # TODO does this work, or do we have to append to Path
-from .paths_lstm_classifier_tf import PathLSTMClassifier
+from common.knowledge_resource import KnowledgeResource
+from paths_lstm_classifier_tf import PathLSTMClassifier
 
 EMBEDDINGS_DIM = 50
 
 
 def main():
-    # TODO this docopt need to explain that the usage is a prerequisite to running this script, which trains the
-    # TODO hyperparameters of the model, and then evaluates the best model.
     args = docopt("""The LSTM-based integrated pattern-based and distributional method for multiclass
     semantic relations classification
 
     Usage:
-        parse_wikipedia.py <corpus_prefix> <dataset_prefix> <model_prefix_file> <embeddings_file> <num_hidden_layers>
+        train_integrated_tf.py <corpus_prefix> <dataset_prefix> <model_prefix_file> <embeddings_file> <num_hidden_layers>
 
-        <wiki_file> = the Wikipedia dump file
-        <vocabulary_file> = a file containing the words to include
-        <out_file> = the output file
+        <corpus_prefix> = file path and prefix of the corpus files
+        <dataset_prefix> = file path of the dataset files containing train.tsv, test.tsv, val.tsv and relations.txt
+        <model_prefix_file> = output directory and prefix for the model files
+        <embeddings_file> = pre-trained word embeddings file, in txt format
+        <num_hidden_layers> = the number of network hidden layers (0 and 1 are supported)
     """)
 
     corpus_prefix = args['<corpus_prefix>']
@@ -52,7 +52,7 @@ def main():
     # Load the relations
     with open(dataset_prefix + '/relations.txt', 'r', encoding='utf-8') as f_in:
         relations = [line.strip() for line in f_in]
-        relation_index = { relation : i for i, relation in enumerate(relations) }
+        relation_index = {relation: i for i, relation in enumerate(relations)}
 
     # Load the datasets
     print('Loading the dataset...')
@@ -85,14 +85,14 @@ def main():
           (len(word_index), len(pos_index), len(dep_index), len(dir_index)))
 
     X_train = dataset_instances[:len(train_set)]
-    X_val = dataset_instances[len(train_set):len(train_set)+len(val_set)]
-    X_test = dataset_instances[len(train_set)+len(val_set):]
+    X_val = dataset_instances[len(train_set):len(train_set) + len(val_set)]
+    X_test = dataset_instances[len(train_set) + len(val_set):]
 
     x_y_vectors_train = x_y_vectors[:len(train_set)]
-    x_y_vectors_val = x_y_vectors[len(train_set):len(train_set)+len(val_set)]
-    x_y_vectors_test = x_y_vectors[len(train_set)+len(val_set):]
+    x_y_vectors_val = x_y_vectors[len(train_set):len(train_set) + len(val_set)]
+    x_y_vectors_test = x_y_vectors[len(train_set) + len(val_set):]
 
-    # Tune the hyper-parameters using the validation set
+    # Model Training, Tune the hyper-parameters using the validation set
     epochs = [10, 15, 20]
     word_dropout_rates = [0.0, 0.2, 0.4]
     f1_results = []
@@ -101,15 +101,16 @@ def main():
 
     for word_dropout_rate in word_dropout_rates:
         for n_epochs in epochs:
-
             # Create the classifier
             classifier = PathLSTMClassifier(num_lemmas=len(word_index), num_pos=len(pos_index), num_dep=len(dep_index),
-                                            num_directions=len(dir_index), n_epochs=n_epochs, num_relations=len(relations),
+                                            num_directions=len(dir_index), n_epochs=n_epochs,
+                                            num_relations=len(relations),
                                             lemma_embeddings=word_vectors, dropout=word_dropout_rate,
                                             num_hidden_layers=num_hidden_layers)
 
             description = 'dropout = %.2f, num epochs = %d' % (word_dropout_rate, n_epochs)
             print('Training with ' + description + '...')
+            # TODO: Train an example model with TF2.0 and test output
             classifier.fit(X_train, y_train, x_y_vectors=x_y_vectors_train)
 
             pred = classifier.predict(X_val, x_y_vectors=x_y_vectors_val)
@@ -155,11 +156,15 @@ def get_vocabulary(corpus, dataset_keys):
     :param dataset_keys: the word pairs in the dataset
     :return: a set of distinct words appearing as x or y or in a path
     """
-    keys = [(corpus.get_id_by_term(str(x)), corpus.get_id_by_term(str(y))) for (x, y) in dataset_keys]
-    path_lemmas = set([edge.split('/')[0]
-                       for (x_id, y_id) in keys
-                       for path in list(get_paths(corpus, x_id, y_id).keys())
-                       for edge in path.split('_')])
+
+    keys = [(corpus.get_id_by_term(str.encode(x)), corpus.get_id_by_term(str.encode(y))) for (x, y) in dataset_keys]
+    path_lemmas = []
+    for x_id, y_id in keys:
+        for path in list(get_paths(corpus, x_id, y_id).keys()):
+            for edge in path.split('_'):
+                path_lemmas.append(edge.split('/')[0])
+    path_lemmas = set(path_lemmas)
+
     x_y_words = set([x for (x, y) in dataset_keys]).union([y for (x, y) in dataset_keys])
     return list(path_lemmas.union(x_y_words))
 
@@ -184,9 +189,9 @@ def load_paths_and_word_vectors(corpus, dataset_keys, lemma_index):
 
     # Vectorize tha paths (this calculates p_xy for the corpus
     # Note: vectorize path calls vectorize edge, which computes the edge
-    keys = [(corpus.get_id_by_term(str(x)), corpus.get_id_by_term(str(y))) for (x, y) in dataset_keys]
+    keys = [(corpus.get_id_by_term(str.encode(x)), corpus.get_id_by_term(str.encode(y))) for (x, y) in dataset_keys]
     paths_x_to_y = [{vectorize_path(path, lemma_index, pos_index, dep_index, dir_index): count
-                      for path, count in get_paths(corpus, x_id, y_id).items()}
+                     for path, count in get_paths(corpus, x_id, y_id).items()}
                     for (x_id, y_id) in keys]
     paths = [{p: c for p, c in paths_x_to_y[i].items() if p is not None} for i in range(len(keys))]
 
@@ -197,9 +202,9 @@ def load_paths_and_word_vectors(corpus, dataset_keys, lemma_index):
     print('Getting word vectors for the terms...')
     x_y_vectors = [(lemma_index.get(x, 0), lemma_index.get(y, 0)) for (x, y) in dataset_keys]
 
-    pos_inverted_index = { i : p for p, i in pos_index.items() }
-    dep_inverted_index = { i : p for p, i in dep_index.items() }
-    dir_inverted_index = { i : p for p, i in dir_index.items() }
+    pos_inverted_index = {i: p for p, i in pos_index.items()}
+    dep_inverted_index = {i: p for p, i in dep_index.items()}
+    dir_inverted_index = {i: p for p, i in dir_index.items()}
 
     print('Done loading corpus data!')
 

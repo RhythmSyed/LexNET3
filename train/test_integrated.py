@@ -3,7 +3,7 @@ import argparse
 from evaluation_common import evaluate
 from lstm_common import load_dataset, get_paths, vectorize_path
 from paths_lstm_classifier import load_model
-from LexNET3.common.knowledge_resource import KnowledgeResource
+from common.knowledge_resource import KnowledgeResource
 
 
 ap = argparse.ArgumentParser()

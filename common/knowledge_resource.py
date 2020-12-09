@@ -22,7 +22,7 @@ class KnowledgeResource:
         return self.id_to_term[str(id_)]
 
     def get_path_by_id(self, id_):
-        return self.id_to_path[str(id_)]
+        return self.id_to_path[str.encode(str(id_))]
 
     def get_id_by_term(self, term):
         return int(self.term_to_id[term]) if term in self.term_to_id else -1
@@ -35,8 +35,8 @@ class KnowledgeResource:
         Returns the relations from x to y
         """
         path_dict = {}
-        key = str(x) + '###' + str(y)
-        path_str = self.l2r_edges[key] if key in self.l2r_edges else ''
+        key = str.encode(str(x) + '###' + str(y))
+        path_str = self.l2r_edges[key].decode('utf-8') if key in self.l2r_edges else ''
 
         if len(path_str) > 0:
             paths = [tuple(map(int, p.split(':'))) for p in path_str.split(',')]
