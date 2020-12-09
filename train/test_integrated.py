@@ -6,27 +6,18 @@ from paths_lstm_classifier import load_model
 from LexNET3.common.knowledge_resource import KnowledgeResource
 
 
-# ap = argparse.ArgumentParser()
+ap = argparse.ArgumentParser()
 # ap.add_argument('-g', '--gpus', help='number of gpus to use [0,1], default=0', type=int, default=0, choices=[0,1])
 # ap.add_argument('-m', '--memory', help='set dynet memory, default 8192',  default=8192)
 # ap.add_argument('-s', '--seed', help='dynet random seed, pick any integer you like, default=3016748844', default=3016748844)
-# ap.add_argument('corpus_prefix', help='path to the corpus resource')
-# ap.add_argument('dataset_prefix', help='path to the train/test/val/rel data')
-# ap.add_argument('model_prefix_file', help='where to store the result')
-#
-# args = ap.parse_args()
+ap.add_argument('corpus_prefix', help='path to the corpus resource')
+ap.add_argument('dataset_prefix', help='path to the train/test/val/rel data')
+ap.add_argument('model_prefix_file', help='where to store the result')
 
-args = {
-    'corpus_prefix': '../resource/wiki',
-    'dataset_prefix': '../datasets/KHN',
-    'model_prefix': '/Users/rhythmsyed/Desktop/GTRI/entitylink/models/BLESS/lstm_integrated'
-}
-
+args = ap.parse_args()
 
 sys.path.append('../common')
 sys.path.append('.common')
-
-
 
 EMBEDDINGS_DIM = 50
 
@@ -34,22 +25,22 @@ EMBEDDINGS_DIM = 50
 def main():
 
     # Load the relations
-    with open(args['dataset_prefix'] + '/relations.txt', 'r', encoding='utf-8') as f_in:
+    with open(args.dataset_prefix + '/relations.txt', 'r', encoding='utf-8') as f_in:
         relations = [line.strip() for line in f_in]
         relation_index = {relation: i for i, relation in enumerate(relations)}
 
     # Load the datasets
     print('Loading the dataset...')
-    test_set = load_dataset(args['dataset_prefix'] + '/test.tsv', relations)
+    test_set = load_dataset(args.dataset_prefix + '/test.tsv', relations)
     y_test = [relation_index[label] for label in list(test_set.values())]
 
     # Load the resource (processed corpus)
     print('Loading the corpus...')
-    corpus = KnowledgeResource(args['corpus_prefix'])
+    corpus = KnowledgeResource(args.corpus_prefix)
     print('Done!')
 
     # Load the pre-trained model file
-    classifier, word_index, pos_index, dep_index, dir_index = load_model(args['model_prefix'])
+    classifier, word_index, pos_index, dep_index, dir_index = load_model(args.model_prefix_file)
 
     # Load the paths and create the feature vectors
     print('Loading path files...')

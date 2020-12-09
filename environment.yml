@@ -1,0 +1,14 @@
+name: LexNET3_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python==3.8
+  - pip==20.3.1
+  - pip:
+    - tensorflow==2.3.1
+    - bsddb3==6.2.9
+    - docopt==0.6.2
+    - numpy==1.18.5
+    - scikit-learn==0.23.2
+    - scipy==1.5.4

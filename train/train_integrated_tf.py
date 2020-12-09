@@ -1,13 +1,14 @@
 import sys
 import glob
 import shutil
+import numpy as np
 
 import tensorflow as tf
 tf.compat.v1.set_random_seed(0)
 
 sys.path.append('../common/')
 
-from .lstm_common import (
+from lstm_common import (
     vectorize_path,
     load_dataset,
     load_embeddings,
@@ -49,7 +50,7 @@ def main():
     np.random.seed(133)
 
     # Load the relations
-    with codecs.open(dataset_prefix + '/relations.txt', 'r', 'utf-8') as f_in:
+    with open(dataset_prefix + '/relations.txt', 'r', encoding='utf-8') as f_in:
         relations = [line.strip() for line in f_in]
         relation_index = { relation : i for i, relation in enumerate(relations) }
 

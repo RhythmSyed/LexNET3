@@ -4,22 +4,28 @@ import argparse
 
 import numpy as np
 
-ap = argparse.ArgumentParser()
-ap.add_argument('-g', '--gpus', help='number of gpus to use [0,1], default=0', type=int, default=0, choices=[0,1])
-ap.add_argument('-m', '--memory', help='set dynet memory, default 8192',  default=8192)
-ap.add_argument('-s', '--seed', help='dynet random seed, pick any integer you like, default=3016748844', default=3016748844)
-ap.add_argument('--num_hidden_layers', help='number of hidden layers to use', type=int, default=0)
-ap.add_argument('--num_epochs', help='number of epochs to train', type=int, default=5)
-ap.add_argument('corpus_prefix', help='path to the corpus resource')
-ap.add_argument('dataset_prefix', help='path to the train/test/val/rel data')
-ap.add_argument('model_prefix_file', help='where to store the result')
-ap.add_argument('embeddings_file', help='path to word embeddings file')
+# ap = argparse.ArgumentParser()
+# ap.add_argument('-g', '--gpus', help='number of gpus to use [0,1], default=0', type=int, default=0, choices=[0,1])
+# ap.add_argument('-m', '--memory', help='set dynet memory, default 8192',  default=8192)
+# ap.add_argument('-s', '--seed', help='dynet random seed, pick any integer you like, default=3016748844', default=3016748844)
+# ap.add_argument('--num_hidden_layers', help='number of hidden layers to use', type=int, default=0)
+# ap.add_argument('--num_epochs', help='number of epochs to train', type=int, default=5)
+# ap.add_argument('corpus_prefix', help='path to the corpus resource')
+# ap.add_argument('dataset_prefix', help='path to the train/test/val/rel data')
+# ap.add_argument('model_prefix_file', help='where to store the result')
+# ap.add_argument('embeddings_file', help='path to word embeddings file')
+#
+# args = ap.parse_args()
 
-args = ap.parse_args()
+args = {
+    'corpus_prefix': '/Users/rhythmsyed/Desktop/GTRI/entitylink/resource/wiki',
+    'dataset_prefix': '../datasets/KHN',
+    'model_prefix': '/Users/rhythmsyed/Desktop/GTRI/entitylink/models/BLESS/lstm_integrated'
+}
 
 sys.path.append('../common/')
 
-from .lstm_common import (
+from lstm_common import (
     get_id,
     get_paths,
     load_dataset,
@@ -29,11 +35,11 @@ from .lstm_common import (
     vectorize_path,
 )
 from itertools import count
-from .evaluation_common import evaluate, output_predictions
+from evaluation_common import evaluate, output_predictions
 from collections import defaultdict
 # TODO remove path appending and replace with library import
-from knowledge_resource import KnowledgeResource
-from .paths_lstm_classifier import PathLSTMClassifier
+from LexNET3.common.knowledge_resource import KnowledgeResource
+from paths_lstm_classifier import PathLSTMClassifier
 
 EMBEDDINGS_DIM = 50
 MAX_PATHS_PER_PAIR = -1 # Set to K > 0 if you want to limit the number of path per pair (for memory reasons)
@@ -43,7 +49,7 @@ def main():
     np.random.seed(133)
 
     # Load the relations
-    with codecs.open(args.dataset_prefix + '/relations.txt', 'r', 'utf-8') as f_in:
+    with open(args.dataset_prefix + '/relations.txt', 'r', encoding='utf-8') as f_in:
         relations = [line.strip() for line in f_in]
         relation_index = { relation : i for i, relation in enumerate(relations) }
 
