@@ -8,7 +8,7 @@ tf.compat.v1.set_random_seed(0)
 
 sys.path.append('../common/')
 
-from lstm_common import (
+from .lstm_common import (
     vectorize_path,
     load_dataset,
     load_embeddings,

@@ -1,4 +1,8 @@
-# LexNET3 -> LexNET ported to Python >3
+# LexNET3 -> LexNET ported to Python 3.x
+Setup:
+* conda env create -f environment.yml
+* conda activate LexNET3_env
+
 
 # LexNET: Integrated Path-based and Distributional Method for Lexical Semantic Relation Classification
 
