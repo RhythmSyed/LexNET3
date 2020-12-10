@@ -59,8 +59,9 @@ class PathLSTMClassifier(BaseEstimator):
             self.lemma_vectors = lemma_embeddings
 
         # Create the network
-        self.model_parameters = create_computation_graph(self.num_lemmas, self.num_pos, self.num_dep, self.num_directions,
-                                                         self.num_relations, self.lemma_vectors, self.num_hidden_layers)
+        self.model_parameters = create_computation_graph(self.num_lemmas, self.num_pos, self.num_dep,
+                                                         self.num_directions, self.num_relations, self.lemma_vectors,
+                                                         self.num_hidden_layers)
 
         self.session = tf.compat.v1.Session()
 
@@ -271,8 +272,8 @@ def lstm_model(model_parameters):
     dir_lookup = model_parameters['dir_lookup']
 
     # Define the place holders
-    batch_paths = tf.compat.v1.placeholder(tf.int32, shape=(None, MAX_PATH_LEN, 4)) # the paths to compute in this batch
-    seq_lengths = tf.compat.v1.placeholder(tf.int32, shape=(None,)) # the length of each path
+    batch_paths = tf.compat.v1.placeholder(tf.int32, shape=(None, MAX_PATH_LEN, 4))     # the paths to compute in this batch
+    seq_lengths = tf.compat.v1.placeholder(tf.int32, shape=(None,))     # the length of each path
     num_batch_paths = tf.compat.v1.placeholder(tf.int32)
 
     lookup_tables = [lemma_lookup, pos_lookup, dep_lookup, dir_lookup]
@@ -287,14 +288,14 @@ def lstm_model(model_parameters):
     path_matrix = [tf.concat(lst, -1) for lst in path_matrix]
     path_matrix = tf.squeeze(tf.stack(path_matrix, 0))
     print("num_batch_paths", tf.shape(num_batch_paths))
-    print("MAX_PATH_LEN", tf.shape(MAX_PATH_LEN))
-    print("LSTM_INPUT_DIM", tf.shape(LSTM_INPUT_DIM))
+    print("MAX_PATH_LEN", MAX_PATH_LEN)
+    print("LSTM_INPUT_DIM", LSTM_INPUT_DIM)
     path_matrix = tf.reshape(path_matrix, tf.stack([num_batch_paths, MAX_PATH_LEN, LSTM_INPUT_DIM]))
 
     # Define the operations
-    lstm_cell = tf.compat.v1.nn.rnn_cell.BasicLSTMCell(LSTM_HIDDEN_DIM)
+    lstm_cell = tf.keras.layers.LSTMCell(LSTM_HIDDEN_DIM)
     lstm_outputs, _ = tf.compat.v1.nn.dynamic_rnn(lstm_cell, path_matrix, dtype=tf.float32, sequence_length=seq_lengths)
-
+    #lstm_outputs, _ = tf.keras.layers.RNN(lstm_cell, path_matrix, dtype=tf.float32, mask=seq_lengths)
     # Get the last output from each item in the batch
     path_embeddings = extract_last_relevant(lstm_outputs, num_batch_paths, seq_lengths)
 
@@ -383,8 +384,14 @@ def train(session, model_parameters, X_train, y_train, nepochs, num_relations, n
         y_pred = np.zeros(len(y_train))
 
         for minibatch in range(n_batches):
+            print('Minibatch: {} out of {}'.format(minibatch, n_batches))
 
             batch_indices = epoch_indices[minibatch * BATCH_SIZE:(minibatch + 1) * BATCH_SIZE]
+
+            # Handle last batch by grabbing samples from the beginning
+            if minibatch == n_batches-1:
+                fill = BATCH_SIZE - len(batch_indices)
+                batch_indices += [*range(fill)]
 
             # Compute each path in the batch once, create a matrix of path embeddings, and average for each word-pair
             curr_batch_paths, curr_path_lists, curr_path_counts, curr_labels, x_vectors, y_vectors, curr_seq_lengths \
@@ -478,6 +485,8 @@ def create_computation_graph(num_lemmas, num_pos, num_dep, num_directions, num_r
     :param num_hidden_layers The number of hidden layers for the term-pair classification network
     :return: the model parameters: LSTM, parameters and lookup tables
     """
+    if wv is None:
+        wv = []
     model_parameters = {}
     initializer = tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform")
 

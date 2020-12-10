@@ -92,9 +92,9 @@ def main():
     x_y_vectors_val = x_y_vectors[len(train_set):len(train_set) + len(val_set)]
     x_y_vectors_test = x_y_vectors[len(train_set) + len(val_set):]
 
-    # Model Training, Tune the hyper-parameters using the validation set
-    epochs = [10, 15, 20]
-    word_dropout_rates = [0.0, 0.2, 0.4]
+    # TODO: Model Training, Tune the hyper-parameters using the validation set
+    epochs = [10]#, 15, 20]
+    word_dropout_rates = [0.0]#, 0.2, 0.4]
     f1_results = []
     descriptions = []
     model_prefixes = []
@@ -136,6 +136,7 @@ def main():
     for file in glob.glob(best_model_prefix + '.*'):
         shutil.copy(file, model_prefix_file + file[file.index(best_model_prefix) + len(best_model_prefix):])
 
+    # Evaluate Trained Model
     classifier, word_index, pos_index, dep_index, dir_index = PathLSTMClassifier.load_model(model_prefix_file)
 
     # Evaluate on the test set
