@@ -76,8 +76,15 @@ class PathLSTMClassifier(BaseEstimator):
         with open(model_file_prefix + '.params') as f_in:
             params = json.load(f_in)
 
-        classifier = PathLSTMClassifier(params['num_lemmas'], params['num_pos'], params['num_dep'],
-                                        params['num_directions'], num_relations=params['num_relations'],
+        # Old Model Support
+        if 'lemma_lookup' in params:
+            params['num_lemmas'] = params['lemma_lookup'][0]
+            params['num_pos'] = params['pos_lookup'][0]
+            params['num_dep'] = params['dep_lookup'][0]
+            params['num_directions'] = params['dir_lookup'][0]
+
+        classifier = PathLSTMClassifier(num_lemmas=params['num_lemmas'], num_pos=params['num_pos'], num_dep=params['num_dep'],
+                                        num_directions=params['num_directions'], num_relations=params['num_relations'],
                                         num_hidden_layers=params['num_hidden_layers'])
 
         # Initialize the session and start training
